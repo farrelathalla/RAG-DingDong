@@ -15,8 +15,7 @@ echo Installing dependencies...
 pip install -r backend/requirements.txt
 
 echo.
-echo Starting RAG-DingDong server at http://localhost:8000
+echo Starting RAG-DingDong server at http://127.0.0.1:8000
 echo Press Ctrl+C to stop.
 echo.
-cd backend
-python -m uvicorn main:app --host 0.0.0.0 --port 8000 --reload
+python -m uvicorn backend.main:app --host 127.0.0.1 --port 8000 --reload

@@ -1,0 +1,17 @@
+# Environment
+.env
+
+# Google OAuth credentials (contains client secret)
+backend/client_secret.json
+
+# Downloaded Drive files and persisted index
+data/
+
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+.pytest_cache/
+
+# Debug scripts
+debug_gemini.py

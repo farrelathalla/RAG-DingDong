@@ -138,6 +138,62 @@ body { background: var(--bg); color: var(--text); font-family: var(--font); heig
 #query-input:focus { border-color: var(--accent); }
 #query-input:disabled { opacity: 0.5; }
 
+/* Source cards — clickable */
+.source-card { cursor: pointer; transition: border-color 0.15s, transform 0.1s; }
+.source-card:hover { border-color: var(--accent); transform: translateY(-2px); }
+
+/* Document Viewer Modal */
+.modal-overlay {
+  position: fixed; inset: 0; background: rgba(0,0,0,0.7);
+  display: flex; align-items: center; justify-content: center;
+  z-index: 1000; backdrop-filter: blur(4px);
+}
+.modal {
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: 16px; width: min(860px, 95vw); max-height: 90vh;
+  display: flex; flex-direction: column; overflow: hidden;
+}
+.modal-header {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 14px 20px; border-bottom: 1px solid var(--border);
+  background: var(--surface2); flex-shrink: 0;
+}
+.modal-title-group { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.modal-doc-name { font-size: 0.9rem; font-weight: 700; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 680px; }
+.modal-page-info { font-size: 0.72rem; color: var(--text-muted); }
+.modal-close {
+  background: none; border: none; color: var(--text-muted); font-size: 1.1rem;
+  cursor: pointer; padding: 4px 8px; border-radius: 6px; flex-shrink: 0;
+  transition: background 0.15s, color 0.15s;
+}
+.modal-close:hover { background: var(--border); color: var(--text); }
+
+.viewer-body {
+  flex: 1; overflow: auto; display: flex;
+  justify-content: center; align-items: flex-start;
+  padding: 20px; background: #111;
+}
+#pdf-canvas { max-width: 100%; box-shadow: 0 4px 24px rgba(0,0,0,0.5); border-radius: 4px; }
+
+.text-viewer { background: var(--surface); }
+.text-viewer pre {
+  white-space: pre-wrap; word-break: break-word;
+  font-family: var(--font); font-size: 0.88rem; line-height: 1.75;
+  color: var(--text); max-width: 720px; margin: 0 auto;
+}
+
+.viewer-loading {
+  flex: 1; display: flex; align-items: center; justify-content: center;
+  color: var(--text-muted); font-size: 0.9rem; padding: 40px;
+}
+
+.modal-footer {
+  display: flex; gap: 12px; padding: 12px 20px;
+  border-top: 1px solid var(--border); background: var(--surface2);
+  justify-content: center; flex-shrink: 0;
+}
+.nav-btn { width: auto; min-width: 100px; }
+
 /* Scrollbar */
 ::-webkit-scrollbar { width: 6px; height: 6px; }
 ::-webkit-scrollbar-track { background: transparent; }

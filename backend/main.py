@@ -10,7 +10,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 
 from backend.config import (
-    GEMINI_API_KEY, DRIVE_FOLDER_ID, INDEX_DIR, BASE_DIR
+    GROQ_API_KEY, DRIVE_FOLDER_ID, INDEX_DIR, BASE_DIR
 )
 from backend.drive_client import DriveClient
 from backend.document_processor import extract_pages
@@ -46,8 +46,8 @@ if _index_file.exists():
         "page_count": _page_index.page_count,
         "doc_count": len(_page_index.doc_names),
     })
-    if GEMINI_API_KEY:
-        _rag_engine = RAGEngine(index=_page_index, api_key=GEMINI_API_KEY)
+    if GROQ_API_KEY:
+        _rag_engine = RAGEngine(index=_page_index, api_key=GROQ_API_KEY)
 
 REDIRECT_URI = "http://localhost:8000/auth/callback"
 
@@ -99,7 +99,7 @@ def _build_index():
                 all_pages.extend(pages)
         _page_index.build(all_pages)
         _page_index.save(str(_index_file))
-        _rag_engine = RAGEngine(index=_page_index, api_key=GEMINI_API_KEY)
+        _rag_engine = RAGEngine(index=_page_index, api_key=GROQ_API_KEY)
         _index_status.update({
             "indexed": True,
             "page_count": _page_index.page_count,
@@ -142,9 +142,8 @@ def chat(req: ChatRequest):
             status_code=503,
             content={"answer": "Index not ready. Please authenticate and click 'Index Drive'.", "sources": []},
         )
-    # Gemini uses "user"/"model" roles (frontend sends "user"/"assistant" — remap)
     history = [
-        ChatMessage(role="model" if m["role"] == "assistant" else m["role"], content=m["content"])
+        ChatMessage(role=m["role"], content=m["content"])
         for m in req.history
     ]
     response = _rag_engine.chat(req.query, history)
@@ -152,6 +151,7 @@ def chat(req: ChatRequest):
         "answer": response.answer,
         "sources": [
             {
+                "doc_id": p.doc_id,
                 "doc_name": p.doc_name,
                 "page_num": p.page_num,
                 "snippet": p.text[:300],
@@ -159,6 +159,48 @@ def chat(req: ChatRequest):
             for p in response.sources
         ],
         "query": response.query,
+    }
+
+
+# ── Document viewer endpoints ──────────────────────────────────────────────────
+
+@app.get("/api/file/{doc_id}")
+def serve_file(doc_id: str):
+    """Serve a cached document file for in-browser viewing."""
+    from backend.config import CACHE_DIR
+    for f in CACHE_DIR.iterdir():
+        if f.name.startswith(doc_id + "_"):
+            return FileResponse(str(f), filename=f.name)
+    raise HTTPException(404, "File not found in cache. Re-index to refresh.")
+
+
+@app.get("/api/page-text/{doc_id}/{page_num}")
+def get_page_text(doc_id: str, page_num: int):
+    """Return the extracted text for a specific page (used for non-PDF viewer)."""
+    matches = [
+        p for p in _page_index._pages
+        if p.doc_id == doc_id and p.page_num == page_num
+    ]
+    if not matches:
+        raise HTTPException(404, "Page not found in index.")
+    p = matches[0]
+    return {"doc_name": p.doc_name, "page_num": p.page_num, "text": p.text}
+
+
+@app.get("/api/doc-info/{doc_id}")
+def get_doc_info(doc_id: str):
+    """Return page count and file type for a document."""
+    pages = [p for p in _page_index._pages if p.doc_id == doc_id]
+    if not pages:
+        raise HTTPException(404, "Document not in index.")
+    from backend.config import CACHE_DIR
+    file_path = next((f for f in CACHE_DIR.iterdir() if f.name.startswith(doc_id + "_")), None)
+    ext = file_path.suffix.lower() if file_path else ""
+    return {
+        "doc_name": pages[0].doc_name,
+        "page_count": max(p.page_num for p in pages),
+        "ext": ext,
+        "is_pdf": ext == ".pdf",
     }
 
 

@@ -230,9 +230,139 @@ function renderSources(sources) {
       <div class="page-num">Page ${s.page_num}</div>
       <div class="snippet">${escapeHtml(s.snippet)}</div>
     `;
+    card.addEventListener("click", () => openViewer(s.doc_id, s.page_num));
     sourcesList.appendChild(card);
   }
   sourcesPanel.classList.remove("hidden");
+}
+
+// ── Document Viewer ─────────────────────────────────────────────────────────────
+const modal        = document.getElementById("doc-modal");
+const modalClose   = document.getElementById("modal-close");
+const modalDocName = document.getElementById("modal-doc-name");
+const modalPageInfo= document.getElementById("modal-page-info");
+const pdfViewer    = document.getElementById("pdf-viewer");
+const textViewer   = document.getElementById("text-viewer");
+const textContent  = document.getElementById("text-content");
+const viewerLoading= document.getElementById("viewer-loading");
+const prevBtn      = document.getElementById("prev-page");
+const nextBtn      = document.getElementById("next-page");
+const pdfCanvas    = document.getElementById("pdf-canvas");
+
+// Configure PDF.js worker
+if (typeof pdfjsLib !== "undefined") {
+  pdfjsLib.GlobalWorkerOptions.workerSrc =
+    "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js";
+}
+
+let viewer = { docId: null, currentPage: 1, totalPages: 1, isPdf: false, pdfDoc: null };
+
+async function openViewer(docId, startPage) {
+  viewer = { docId, currentPage: startPage, totalPages: 1, isPdf: false, pdfDoc: null };
+  modal.classList.remove("hidden");
+  showLoading();
+
+  try {
+    const info = await fetch(`${API}/api/doc-info/${docId}`).then(r => r.json());
+    viewer.totalPages = info.page_count;
+    viewer.isPdf = info.is_pdf;
+    modalDocName.textContent = info.doc_name;
+    updateNavButtons();
+
+    if (info.is_pdf) {
+      await loadPdf(docId, startPage);
+    } else {
+      await loadTextPage(docId, startPage);
+    }
+  } catch (e) {
+    showLoading(`Error loading document: ${e.message}`);
+  }
+}
+
+async function loadPdf(docId, pageNum) {
+  showLoading();
+  try {
+    if (!viewer.pdfDoc) {
+      viewer.pdfDoc = await pdfjsLib.getDocument(`${API}/api/file/${docId}`).promise;
+      viewer.totalPages = viewer.pdfDoc.numPages;
+      updateNavButtons();
+    }
+    const page = await viewer.pdfDoc.getPage(pageNum);
+    const scale = Math.min(1.6, (modal.offsetWidth - 80) / page.getViewport({ scale: 1 }).width);
+    const viewport = page.getViewport({ scale });
+    pdfCanvas.width = viewport.width;
+    pdfCanvas.height = viewport.height;
+    await page.render({ canvasContext: pdfCanvas.getContext("2d"), viewport }).promise;
+    showPdfViewer();
+    updatePageInfo();
+  } catch (e) {
+    showLoading(`Failed to render PDF page: ${e.message}`);
+  }
+}
+
+async function loadTextPage(docId, pageNum) {
+  showLoading();
+  try {
+    const data = await fetch(`${API}/api/page-text/${docId}/${pageNum}`).then(r => r.json());
+    textContent.textContent = data.text;
+    showTextViewer();
+    updatePageInfo();
+  } catch (e) {
+    showLoading(`Failed to load page text: ${e.message}`);
+  }
+}
+
+function showLoading(msg = "Loading...") {
+  pdfViewer.classList.add("hidden");
+  textViewer.classList.add("hidden");
+  viewerLoading.classList.remove("hidden");
+  viewerLoading.textContent = msg;
+}
+function showPdfViewer() {
+  viewerLoading.classList.add("hidden");
+  textViewer.classList.add("hidden");
+  pdfViewer.classList.remove("hidden");
+}
+function showTextViewer() {
+  viewerLoading.classList.add("hidden");
+  pdfViewer.classList.add("hidden");
+  textViewer.classList.remove("hidden");
+}
+
+function updatePageInfo() {
+  modalPageInfo.textContent = `Page ${viewer.currentPage} of ${viewer.totalPages}`;
+}
+function updateNavButtons() {
+  prevBtn.disabled = viewer.currentPage <= 1;
+  nextBtn.disabled = viewer.currentPage >= viewer.totalPages;
+}
+
+async function goToPage(delta) {
+  const next = viewer.currentPage + delta;
+  if (next < 1 || next > viewer.totalPages) return;
+  viewer.currentPage = next;
+  updateNavButtons();
+  if (viewer.isPdf) {
+    await loadPdf(viewer.docId, viewer.currentPage);
+  } else {
+    await loadTextPage(viewer.docId, viewer.currentPage);
+  }
+}
+
+prevBtn.addEventListener("click", () => goToPage(-1));
+nextBtn.addEventListener("click", () => goToPage(1));
+modalClose.addEventListener("click", closeViewer);
+modal.addEventListener("click", (e) => { if (e.target === modal) closeViewer(); });
+document.addEventListener("keydown", (e) => {
+  if (modal.classList.contains("hidden")) return;
+  if (e.key === "Escape") closeViewer();
+  if (e.key === "ArrowLeft") goToPage(-1);
+  if (e.key === "ArrowRight") goToPage(1);
+});
+
+function closeViewer() {
+  modal.classList.add("hidden");
+  viewer.pdfDoc = null;
 }
 
 // ── Start ──────────────────────────────────────────────────────────────────────

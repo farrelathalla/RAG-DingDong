@@ -83,6 +83,37 @@
     </main>
   </div>
 
+  <!-- Document Viewer Modal -->
+  <div id="doc-modal" class="modal-overlay hidden">
+    <div class="modal">
+      <div class="modal-header">
+        <div class="modal-title-group">
+          <span id="modal-doc-name" class="modal-doc-name"></span>
+          <span id="modal-page-info" class="modal-page-info"></span>
+        </div>
+        <button id="modal-close" class="modal-close" title="Close">✕</button>
+      </div>
+
+      <!-- PDF viewer -->
+      <div id="pdf-viewer" class="viewer-body hidden">
+        <canvas id="pdf-canvas"></canvas>
+      </div>
+
+      <!-- Text viewer (DOCX / PPTX / TXT) -->
+      <div id="text-viewer" class="viewer-body text-viewer hidden">
+        <pre id="text-content"></pre>
+      </div>
+
+      <div id="viewer-loading" class="viewer-loading">Loading...</div>
+
+      <div class="modal-footer">
+        <button id="prev-page" class="btn btn-secondary nav-btn" disabled>← Prev</button>
+        <button id="next-page" class="btn btn-secondary nav-btn" disabled>Next →</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
   <script src="/static/app.js"></script>
 </body>
 </html>
