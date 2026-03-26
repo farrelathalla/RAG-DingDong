@@ -2,6 +2,16 @@
 
 A vectorless RAG (Retrieval-Augmented Generation) chatbot that searches your Google Drive academic materials using BM25 PageIndex and answers questions with Groq LLM — completely free, no vector database, no embeddings.
 
+## Screenshots
+
+**Chat interface** — ask questions, get cited answers with source cards
+
+![Chat UI](docs/screenshot-chat.png)
+
+**Document viewer** — click any source card to open the document at the cited page
+
+![Document Viewer](docs/screenshot-viewer.png)
+
 ## How It Works
 
 ```
