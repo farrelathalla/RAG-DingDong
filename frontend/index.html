@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>RAG-DingDong — Academic Assistant</title>
+  <link rel="stylesheet" href="/static/style.css" />
+</head>
+<body>
+  <div class="app">
+    <!-- Sidebar -->
+    <aside class="sidebar">
+      <div class="sidebar-header">
+        <h1 class="logo">📚 DingDong</h1>
+        <p class="tagline">Academic Drive Search</p>
+      </div>
+
+      <!-- Auth section -->
+      <div class="section" id="auth-section">
+        <h3>Google Drive</h3>
+        <div id="auth-status-msg" class="status-msg">Checking...</div>
+        <a id="login-btn" href="/auth/login" class="btn btn-primary hidden">
+          Login with Google
+        </a>
+        <div id="logged-in-info" class="hidden">
+          <span class="badge badge-green">Connected</span>
+        </div>
+      </div>
+
+      <!-- Index section -->
+      <div class="section" id="index-section">
+        <h3>Knowledge Index</h3>
+        <div id="index-stats" class="stats-grid">
+          <div class="stat"><span id="stat-pages">—</span><small>pages</small></div>
+          <div class="stat"><span id="stat-docs">—</span><small>documents</small></div>
+        </div>
+        <button id="index-btn" class="btn btn-secondary" disabled>
+          Build Index
+        </button>
+        <div id="index-progress" class="progress-bar hidden">
+          <div class="progress-fill"></div>
+        </div>
+        <div id="index-msg" class="status-msg"></div>
+      </div>
+
+      <!-- Docs list -->
+      <div class="section" id="docs-section">
+        <h3>Indexed Documents</h3>
+        <ul id="docs-list" class="docs-list"></ul>
+      </div>
+    </aside>
+
+    <!-- Main chat area -->
+    <main class="chat-area">
+      <div class="chat-header">
+        <h2>Ask about your study materials</h2>
+      </div>
+
+      <!-- Messages -->
+      <div class="messages" id="messages">
+        <div class="welcome-msg">
+          <p>Login with Google Drive and build the index to get started.</p>
+          <p>Then ask me anything about your academic materials!</p>
+        </div>
+      </div>
+
+      <!-- Sources panel -->
+      <div id="sources-panel" class="sources-panel hidden">
+        <h4>Source Pages</h4>
+        <div id="sources-list" class="sources-list"></div>
+      </div>
+
+      <!-- Input -->
+      <div class="input-area">
+        <textarea
+          id="query-input"
+          placeholder="Ask something about your study materials..."
+          rows="2"
+          disabled
+        ></textarea>
+        <button id="send-btn" class="btn btn-send" disabled>Send</button>
+      </div>
+    </main>
+  </div>
+
+  <script src="/static/app.js"></script>
+</body>
+</html>
